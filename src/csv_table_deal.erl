@@ -178,9 +178,9 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
       case O of
         write ->
           {Time1, Time2, Time3} = Value,
-          Time1_binary = csv_table_deal:do_out_2_model_one_field({Time1, integer}, O),
-          Time2_binary = csv_table_deal:do_out_2_model_one_field({Time2, integer}, O),
-          Tim3_binary = csv_table_deal:do_out_2_model_one_field({Time3, integer}, O),
+          Time1_binary = csv_table_deal:do_out_2_model_one_field({Time1, binary}, O),
+          Time2_binary = csv_table_deal:do_out_2_model_one_field({Time2, binary}, O),
+          Tim3_binary = csv_table_deal:do_out_2_model_one_field({Time3, binary}, O),
           <<Time1_binary/binary, "\,", Time2_binary/binary, "\,", Tim3_binary/binary>>;
         save ->
           [Txn_date, Txn_time, Tys_trace_no] = binary:split(Value, [<<"\,">>], [global]),
