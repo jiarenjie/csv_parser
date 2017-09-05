@@ -27,8 +27,9 @@ init([]) ->
   {ok, F_qh} = application:get_env(f_qh),
   {ok, F_fields} = application:get_env(f_fields),
   {ok, F_save} = application:get_env(f_save),
+  {ok, F_model} = application:get_env(f_model),
 
-  {ok, #state{f_qh = F_qh, f_fields = F_fields, f_save = F_save}}.
+  {ok, #state{f_qh = F_qh, f_fields = F_fields, f_save = F_save , f_model = F_model}}.
 
 
 restore(M, FileName) ->
@@ -52,8 +53,8 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
   LinesGap = 500,
 
   F_repo_to_mode =
-    fun(Repo, M, Fields, Config, Write) ->
-      Model = apply(M_model, F_model, [M, Repo]),
+    fun(Repo, M0, Fields, Config, Write) ->
+      Model = apply(M_model, F_model, [M0, Repo]),
 %%    Model = utils_recop:to_model(M, Repo),
       to_mode(Model, Fields, Config, Write)
     end,
