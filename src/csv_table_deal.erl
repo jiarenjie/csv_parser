@@ -146,7 +146,7 @@ do_out_2_model_one_field({Value, atom}, save) ->
   binary_to_atom(Value, utf8);
 
 do_out_2_model_one_field({Value, ts}, write) ->
-  [Time1, Time2, Time3] = Value,
+  {Time1, Time2, Time3} = Value,
   Txn_binary = csv_table_deal:do_out_2_model_one_field({Time1, integer}, write),
   Daily_binary = csv_table_deal:do_out_2_model_one_field({Time2, integer}, write),
   Monthly_binary = csv_table_deal:do_out_2_model_one_field({Time3, integer}, write),
