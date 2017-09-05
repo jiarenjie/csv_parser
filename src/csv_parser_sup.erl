@@ -23,7 +23,7 @@ start_link() ->
 
 init([]) ->
   RestartStrategy = {one_for_one, 4, 60},
-  Children = [{cav_table_deal,
-    {cav_table_deal, start_link, []},
-    permanent, 2000, supervisor, [cav_table_deal]}],
+  Children = [{csv_table_deal,
+    {csv_table_deal, start_link, []},
+    permanent, 2000, supervisor, [csv_table_deal]}],
   {ok, {RestartStrategy, Children}}.
