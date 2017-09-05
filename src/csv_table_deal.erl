@@ -24,9 +24,9 @@ start_link() ->
 
 
 init([]) ->
-  {ok, F_qh} = application:get_env(csv_parser, f_qh),
-  {ok, F_fields} = application:get_env(csv_parser, f_fields),
-  {ok, F_save} = application:get_env(csv_parser, f_save),
+  {ok, F_qh} = application:get_env(f_qh),
+  {ok, F_fields} = application:get_env(f_fields),
+  {ok, F_save} = application:get_env(f_save),
 
   {ok, #state{f_qh = F_qh, f_fields = F_fields, f_save = F_save}}.
 
