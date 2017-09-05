@@ -146,10 +146,10 @@ do_out_2_model_one_field({Value, atom}, save) ->
   binary_to_atom(Value, utf8);
 
 do_out_2_model_one_field({Value, ts}, write) ->
-  [{txn, Txn}, {daily, Daily}, {monthly, Monthly}] = Value,
-  Txn_binary = csv_table_deal:do_out_2_model_one_field({Txn, integer}, write),
-  Daily_binary = csv_table_deal:do_out_2_model_one_field({Daily, integer}, write),
-  Monthly_binary = csv_table_deal:do_out_2_model_one_field({Monthly, integer}, write),
+  [Time1, Time2, Time3] = Value,
+  Txn_binary = csv_table_deal:do_out_2_model_one_field({Time1, integer}, write),
+  Daily_binary = csv_table_deal:do_out_2_model_one_field({Time2, integer}, write),
+  Monthly_binary = csv_table_deal:do_out_2_model_one_field({Time3, integer}, write),
   <<Txn_binary/binary, "\,", Daily_binary/binary, "\,", Monthly_binary/binary>>;
 do_out_2_model_one_field({Value, ts}, save) ->
   [Time1, Time2, Time3] = binary:split(Value, [<<"\,">>], [global]),
@@ -177,12 +177,11 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
     fun(Value, O) ->
       case O of
         write ->
-          {Txn_date, Txn_time, Tys_trace_no} = Value,
-          Txn_date_w = csv_table_deal:do_out_2_model_one_field({Txn_date, binary}, O),
-          Txn_time_w = csv_table_deal:do_out_2_model_one_field({Txn_time, binary}, O),
-          Tys_trace_no_w = csv_table_deal:do_out_2_model_one_field({Tys_trace_no, binary}, O),
-
-          <<Txn_date_w/binary, "\,", Txn_time_w/binary, "\,", Tys_trace_no_w/binary>>;
+          {Time1, Time2, Time3} = Value,
+          Time1_binary = csv_table_deal:do_out_2_model_one_field({Time1, integer}, O),
+          Time2_binary = csv_table_deal:do_out_2_model_one_field({Time2, integer}, O),
+          Tim3_binary = csv_table_deal:do_out_2_model_one_field({Time3, integer}, O),
+          <<Time1_binary/binary, "\,", Time2_binary/binary, "\,", Tim3_binary/binary>>;
         save ->
           [Txn_date, Txn_time, Tys_trace_no] = binary:split(Value, [<<"\,">>], [global]),
           Txn_date_r = csv_table_deal:do_out_2_model_one_field({Txn_date, binary}, O),

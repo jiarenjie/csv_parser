@@ -139,10 +139,10 @@ read_line_fold(F,FileName,LinesGap)->
 read_line(Fd, LinesGap, F) ->
   read_line(Fd, <<"">>, [], [0,0], LinesGap, F).
 read_line(_Fd, Line, eof, [N,Total], _, F) ->
-  lager:info("F:~p lines to file:~ts", [Total+N-1]),
+  lager:info("restore table lines:~p", [Total+N-1]),
   F(Line);
 read_line(Fd, Line, [], [N,Total], LinesGap, F) when N >= LinesGap ->
-  lager:info("F:~p lines to file:~ts", [Total]),
+  lager:info("restore table lines:~p", [Total]),
   F(Line),
   {Line3, Sign} = case file:read_line(Fd) of
                     {ok, Line2} -> {Line2, []};
