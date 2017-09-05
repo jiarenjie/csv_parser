@@ -29,7 +29,7 @@ init([]) ->
   {ok, F_save} = application:get_env(f_save),
   {ok, F_model} = application:get_env(f_model),
 
-  {ok, #state{f_qh = F_qh, f_fields = F_fields, f_save = F_save , f_model = F_model}}.
+  {ok, #state{f_qh = F_qh, f_fields = F_fields, f_save = F_save, f_model = F_model}}.
 
 
 restore(M, FileName) ->
@@ -41,8 +41,8 @@ backup(M, FileName) ->
 handle_call(_Request, _From, State) ->
   {noreply, State}.
 
-handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fields, F_fields},f_model ={M_model, F_model} } = State) ->
-  QH = apply(M_qh, F_qh, [ M, [{filter, []}] ]),
+handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fields, F_fields}, f_model = {M_model, F_model}} = State) ->
+  QH = apply(M_qh, F_qh, [M, [{filter, []}]]),
   Fields = apply(M_fields, F_fields, [M]),
   Config = table_deal_config(M),
   Table_read_config = table_read_config(M),
@@ -66,9 +66,9 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
           lager:info("Write ~p lines to file:~ts", [Total, FileName]),
           csv_parser:write_to_file(FileName, Acc, Fields, Delimit_field, Delimit_line, [append]),
           %% initial new empty acc
-          {1, [apply(F_repo_to_mode,[Repo, M, Fields, Config, write])], Total + N};
+          {1, [apply(F_repo_to_mode, [Repo, M, Fields, Config, write])], Total + N};
         (Repo, {N, Acc, Total}) ->
-          {N + 1, [apply(F_repo_to_mode,[Repo, M, Fields, Config, write]) | Acc], Total}
+          {N + 1, [apply(F_repo_to_mode, [Repo, M, Fields, Config, write]) | Acc], Total}
       end,
 
   F1 = fun() ->
@@ -128,10 +128,10 @@ out_2_model_one_field(Field, {Acc, Model2OutMap, PL, Operate}) when is_atom(Fiel
 
 do_out_2_model_one_field({undefined, _}, write) ->
   <<"undefined">>;
-do_out_2_model_one_field({Value, binary}, write) ->
-  Value;
 do_out_2_model_one_field({<<"undefined">>, _}, save) ->
   undefined;
+do_out_2_model_one_field({Value, binary}, write) ->
+  Value;
 do_out_2_model_one_field({Value, binary}, save) ->
   Value;
 
@@ -145,12 +145,108 @@ do_out_2_model_one_field({Value, atom}, write) ->
 do_out_2_model_one_field({Value, atom}, save) ->
   binary_to_atom(Value, utf8);
 
+do_out_2_model_one_field({Value, ts}, write) ->
+  [{txn, Txn}, {daily, Daily}, {monthly, Monthly}] = Value,
+  Txn_binary = csv_table_deal:do_out_2_model_one_field({Txn, integer}, write),
+  Daily_binary = csv_table_deal:do_out_2_model_one_field({Daily, integer}, write),
+  Monthly_binary = csv_table_deal:do_out_2_model_one_field({Monthly, integer}, write),
+  <<Txn_binary/binary, "\,", Daily_binary/binary, "\,", Monthly_binary/binary>>;
+do_out_2_model_one_field({Value, ts}, save) ->
+  [Time1, Time2, Time3] = binary:split(Value, [<<"\,">>], [global]),
+  Time1_integer = csv_table_deal:do_out_2_model_one_field({Time1, integer}, save),
+  Time2_integer = csv_table_deal:do_out_2_model_one_field({Time2, integer}, save),
+  Tim3_integer = csv_table_deal:do_out_2_model_one_field({Time3, integer}, save),
+  {Time1_integer, Time2_integer, Tim3_integer};
+
 do_out_2_model_one_field({Value, F}, write) when is_function(F) ->
   F(Value, write);
 do_out_2_model_one_field({Value, F}, save) when is_function(F) ->
   F(Value, save).
 %%================================================================================================
 
+
+table_deal_config(repo_history_mcht_txn_log_pt) ->
+  table_deal_config(repo_mcht_txn_log_pt);
+table_deal_config(repo_history_up_txn_log_pt) ->
+  table_deal_config(repo_up_txn_log_pt);
+table_deal_config(repo_history_ums_reconcile_result_pt)->
+  table_deal_config(repo_ums_reconcile_result_pt);
+table_deal_config(repo_ums_reconcile_result_pt) ->
+  #{
+    id =>
+    fun(Value, O) ->
+      case O of
+        write ->
+          {Txn_date, Txn_time, Tys_trace_no} = Value,
+          Txn_date_w = csv_table_deal:do_out_2_model_one_field({Txn_date, binary}, O),
+          Txn_time_w = csv_table_deal:do_out_2_model_one_field({Txn_time, binary}, O),
+          Tys_trace_no_w = csv_table_deal:do_out_2_model_one_field({Tys_trace_no, binary}, O),
+
+          <<Txn_date_w/binary, "\,", Txn_time_w/binary, "\,", Tys_trace_no_w/binary>>;
+        save ->
+          [Txn_date, Txn_time, Tys_trace_no] = binary:split(Value, [<<"\,">>], [global]),
+          Txn_date_r = csv_table_deal:do_out_2_model_one_field({Txn_date, binary}, O),
+          Txn_time_r = csv_table_deal:do_out_2_model_one_field({Txn_time, binary}, O),
+          Tys_trace_no_r = csv_table_deal:do_out_2_model_one_field({Tys_trace_no, binary}, O),
+          {Txn_date_r, Txn_time_r, Tys_trace_no_r}
+      end
+    end
+    , settlement_date => binary
+    , txn_date => binary
+    , txn_time => binary
+    , ums_mcht_id => binary
+    , term_id => binary
+    , bank_card_no => binary
+    , txn_amt => integer
+    , txn_type => atom
+    , txn_fee => integer
+    , term_batch_no => binary
+    , term_seq => binary
+    , sys_trace_no => binary
+    , ref_id => binary
+    , auth_resp_code => binary
+    , cooperate_fee => binary
+    , cooperate_mcht_id => binary
+    , up_txn_seq => binary
+    , ums_order_id => binary
+    , memo => binary
+  };
+table_deal_config(repo_mcht_txn_acc_pt) ->
+  #{
+    acc_index =>
+    fun(Value, O) ->
+      case O of
+        write ->
+          {Mcht_id, Txn_type, Month_date} = Value,
+          Mcht_id_w = csv_table_deal:do_out_2_model_one_field({Mcht_id, integer}, O),
+          Txn_type_w = csv_table_deal:do_out_2_model_one_field({Txn_type, atom}, O),
+          Month_date_w = csv_table_deal:do_out_2_model_one_field({Month_date, binary}, O),
+
+          <<Mcht_id_w/binary, "\,", Txn_type_w/binary, "\,", Month_date_w/binary>>;
+        save ->
+          [Mcht_id, Txn_type, Month_date] = binary:split(Value, [<<"\,">>], [global]),
+          Mcht_id_r = csv_table_deal:do_out_2_model_one_field({Mcht_id, integer}, O),
+          Txn_type_r = csv_table_deal:do_out_2_model_one_field({Txn_type, atom}, O),
+          Month_date_r = csv_table_deal:do_out_2_model_one_field({Month_date, binary}, O),
+          {Mcht_id_r, Txn_type_r, Month_date_r}
+      end
+    end,
+    mcht_id => integer,
+    txn_type => atom,
+    month_date => binary,
+    acc => integer
+  };
+table_deal_config(repo_backend_users_pt) ->
+  #{
+    id => integer,
+    name => binary,
+    email => binary,
+    password => binary,
+    role => atom,
+    status => atom,
+    last_update_ts => ts,
+    last_login_ts => ts
+  };
 table_deal_config(repo_mchants_pt) ->
   #{id => integer,
     mcht_full_name => binary,
@@ -326,6 +422,76 @@ table_deal_config(repo_up_txn_log_pt) ->
     txn_status => atom,
     up_accNo => binary
   }.
+
+table_read_config(repo_history_mcht_txn_log_pt) ->
+  table_read_config(repo_mcht_txn_log_pt);
+table_read_config(repo_history_up_txn_log_pt) ->
+  table_read_config(repo_up_txn_log_pt);
+table_read_config(repo_history_ums_reconcile_result_pt) ->
+  table_read_config(repo_ums_reconcile_result_pt);
+table_read_config(repo_ums_reconcile_result_pt) ->
+%%  [id,settlement_date,txn_date,txn_time,ums_mcht_id,term_id,
+%%    bank_card_no,txn_amt,txn_type,txn_fee,term_batch_no,
+%%    term_seq,sys_trace_no,ref_id,auth_resp_code,cooperate_fee,
+%%    cooperate_mcht_id,up_txn_seq,ums_order_id,memo]
+  #{
+    field_map => #{
+      id => <<"column1">>
+      , settlement_date => <<"column2">>
+      , txn_date => <<"column3">>
+      , txn_time => <<"column4">>
+      , ums_mcht_id => <<"column5">>
+      , term_id => <<"column6">>
+
+      , bank_card_no => <<"column7">>
+      , txn_amt => <<"column8">>
+      , txn_type => <<"column9">>
+      , txn_fee => <<"column10">>
+      , term_batch_no => <<"column11">>
+
+      , term_seq => <<"column12">>
+      , sys_trace_no => <<"column13">>
+      , ref_id => <<"column14">>
+      , auth_resp_code => <<"column15">>
+      , cooperate_fee => <<"column16">>
+
+      , cooperate_mcht_id => <<"column17">>
+      , up_txn_seq => <<"column18">>
+      , ums_order_id => <<"column19">>
+      , memo => <<"column20">>
+    }
+    , delimit_field => [<<$^, $^>>]
+    , delimit_line => [<<$$, $\n>>]
+  };
+table_read_config(repo_mcht_txn_acc_pt) ->
+%%  [acc_index,mcht_id,txn_type,month_date,acc]
+  #{
+    field_map => #{
+      acc_index => <<"column1">>
+      , mcht_id => <<"column2">>
+      , txn_type => <<"column3">>
+      , month_date => <<"column4">>
+      , acc => <<"column5">>
+    }
+    , delimit_field => [<<$^, $^>>]
+    , delimit_line => [<<$$, $\n>>]
+  };
+table_read_config(repo_backend_users_pt) ->
+%%  [id,name,email,password,role,status,last_update_ts, last_login_ts]
+  #{
+    field_map => #{
+      id => <<"column1">>
+      , name => <<"column2">>
+      , email => <<"column3">>
+      , password => <<"column4">>
+      , role => <<"column5">>
+      , status => <<"column6">>
+      , last_update_ts => <<"column7">>
+      , last_login_ts => <<"column8">>
+    }
+    , delimit_field => [<<$^, $^>>]
+    , delimit_line => [<<$$, $\n>>]
+  };
 table_read_config(repo_mchants_pt) ->
   #{
     field_map => #{
@@ -413,13 +579,6 @@ table_read_config(repo_up_txn_log_pt) ->
     , delimit_line => [<<$$, $\n>>]
   }.
 
-
-
-repo_to_mode(Repo, M, Fields, Config, Write) ->
-  {ok, {M_model, F_model}} = application:get_env(csv_parser, f_model),
-  Model = apply(M_model, F_model, [M, Repo]),
-%%  Model = utils_recop:to_model(M, Repo),
-  to_mode(Model, Fields, Config, Write).
 
 
 
