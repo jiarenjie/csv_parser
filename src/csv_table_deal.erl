@@ -66,9 +66,9 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
           lager:info("Write ~p lines to file:~ts", [Total, FileName]),
           csv_parser:write_to_file(FileName, Acc, Fields, Delimit_field, Delimit_line, [append]),
           %% initial new empty acc
-          {1, [F_repo_to_mode(Repo, M, Fields, Config, write)], Total + N};
+          {1, [apply(F_repo_to_mode,[Repo, M, Fields, Config, write])], Total + N};
         (Repo, {N, Acc, Total}) ->
-          {N + 1, [F_repo_to_mode(Repo, M, Fields, Config, write) | Acc], Total}
+          {N + 1, [apply(F_repo_to_mode,[Repo, M, Fields, Config, write]) | Acc], Total}
       end,
 
   F1 = fun() ->
