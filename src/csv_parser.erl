@@ -6,12 +6,21 @@
 %%% @end
 %%% Created : 03. 七月 2017 11:49
 %%%-------------------------------------------------------------------
--module(delimited_reconcile_file).
+-module(csv_parser).
+-behaviour(application).
 -author("jiarj").
 
 %% API
--export([parse/2,read_line_fold/3, write_to_file/5, write_to_file/6]).
+-export([parse/2, read_line_fold/3, write_to_file/5, write_to_file/6, start/2, stop/1]).
 
+
+
+
+start(_StartType, _StartArgs) ->
+  csv_parser_sup:start_link().
+
+stop(_State) ->
+  ok.
 %%---------------------------------------------------------------------------------------
 parse(Config,Bin) ->
   Delimit_line = maps:get(delimit_line, Config, undefined),
@@ -146,4 +155,6 @@ read_line(Fd, Line, [], [N,Total], LinesGap, F) when N < LinesGap ->
                     eof -> {<<"">>, eof}
                   end,
   read_line(Fd, <<Line/binary, Line3/binary>>, Sign, [N + 1,Total], LinesGap, F).
+
+
 

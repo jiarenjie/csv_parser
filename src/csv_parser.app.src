@@ -1,4 +1,4 @@
-{application, delimited_reconcile_file,
+{application, csv_parser,
  [{description, "An OTP library"},
   {vsn, "0.1.0"},
   {registered, []},
@@ -9,7 +9,7 @@
    ]},
   {env,[]},
   {modules, []},
-
+  {mod, {csv_parser, []}},
   {maintainers, []},
   {licenses, []},
   {links, []}
