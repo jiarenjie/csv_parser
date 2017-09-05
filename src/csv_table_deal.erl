@@ -35,7 +35,6 @@ restore(M, FileName) ->
   gen_server:cast(?SERVER, {restore, M, FileName}).
 
 backup(M, FileName) ->
-
   gen_server:cast(?SERVER, {backup, M, FileName}).
 
 handle_call(_Request, _From, State) ->
