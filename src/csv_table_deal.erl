@@ -197,7 +197,24 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
     , term_id => binary
     , bank_card_no => binary
     , txn_amt => integer
-    , txn_type => atom
+    , txn_type =>
+        fun
+          (Value, O) when is_atom(Value) ->
+          csv_table_deal:do_out_2_model_one_field({Value,atom},O);
+          (Value, O) when is_binary(Value)->
+            case O of
+              write ->
+                case Value of
+                  <<"E74">> ->
+                    <<"refund">>;
+                  _ ->
+                    <<"pay">>
+                end;
+              save ->
+                binary_to_atom(Value, utf8)
+            end
+
+        end
     , txn_fee => integer
     , term_batch_no => binary
     , term_seq => binary
