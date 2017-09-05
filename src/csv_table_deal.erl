@@ -42,7 +42,7 @@ handle_call(_Request, _From, State) ->
   {noreply, State}.
 
 handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fields, F_fields},f_model ={M_model, F_model} } = State) ->
-  QH = apply(M_qh, F_qh, [M]),
+  QH = apply(M_qh, F_qh, [ M, [{filter, []}] ]),
   Fields = apply(M_fields, F_fields, [M]),
   Config = table_deal_config(M),
   Table_read_config = table_read_config(M),
