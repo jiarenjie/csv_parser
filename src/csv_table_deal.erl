@@ -33,12 +33,10 @@ init([]) ->
 
 
 restore(M, FileName) ->
-  gen_server:cast(?SERVER, {restore, M, FileName}),
-  ok.
+  gen_server:cast(?SERVER, {restore, M, FileName}).
 
 backup(M, FileName) ->
-  gen_server:cast(?SERVER, {backup, M, FileName}),
-  ok.
+  gen_server:cast(?SERVER, {backup, M, FileName}).
 
 handle_call(_Request, _From, State) ->
   {noreply, State}.
@@ -97,7 +95,7 @@ handle_cast({restore, M, FileName}, #state{f_fields = {M_Field, F_Field}, f_save
       end,
 %%  FileName = "/mnt/d/csv/"++atom_to_list(M)++".txt",
   Total = csv_parser:read_line_fold(F, FileName, 500),
-  lager:info("restore table: ~p success,total: ~p",[M , FileName,Total]),
+  lager:info("restore table: ~p to file : ~p success,total: ~p",[M , FileName,Total]),
   {noreply, State};
 handle_cast(_Request, State) ->
   {noreply, State}.
