@@ -33,10 +33,12 @@ init([]) ->
 
 
 restore(M, FileName) ->
-  gen_server:cast(?SERVER, {restore, M, FileName}).
+  gen_server:cast(?SERVER, {restore, M, FileName}),
+  ok.
 
 backup(M, FileName) ->
-  gen_server:cast(?SERVER, {backup, M, FileName}).
+  gen_server:cast(?SERVER, {backup, M, FileName}),
+  ok.
 
 handle_call(_Request, _From, State) ->
   {noreply, State}.
@@ -63,7 +65,7 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
         (Repo, {N, Acc, Total}) when N >= LinesGap ->
           %% reach write threshold
           %% dump this to file
-          lager:info("Write ~p lines to file:~ts", [Total, FileName]),
+          lager:debug("Write ~p lines to file:~ts", [Total, FileName]),
           csv_parser:write_to_file(FileName, Acc, Fields, Delimit_field, Delimit_line, [append]),
           %% initial new empty acc
           {1, [apply(F_repo_to_mode, [Repo, M, Fields, Config, write])], Total + N};
@@ -75,8 +77,9 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
     qlc:fold(F, {0, [], 0}, QH)
        end,
   {atomic, {N, Rest, SubTotal}} = mnesia:transaction(F1),
-  lager:info("Write ~p lines to file:~ts", [SubTotal + N, FileName]),
+  lager:debug("Write ~p lines to file:~ts", [SubTotal + N, FileName]),
   csv_parser:write_to_file(FileName, Rest, Fields, Delimit_field, Delimit_line, [append]),
+  lager:info("Write table: ~p to file : ~ts success,total: ~p", [M , FileName,SubTotal + N]),
   {noreply, State};
 handle_cast({restore, M, FileName}, #state{f_fields = {M_Field, F_Field}, f_save = {M_save, F_save}} = State) ->
   Config = table_read_config(M),
@@ -93,7 +96,8 @@ handle_cast({restore, M, FileName}, #state{f_fields = {M_Field, F_Field}, f_save
     lists:foldl(F2, [], Lists)
       end,
 %%  FileName = "/mnt/d/csv/"++atom_to_list(M)++".txt",
-  csv_parser:read_line_fold(F, FileName, 500),
+  Total = csv_parser:read_line_fold(F, FileName, 500),
+  lager:info("restore table: ~p success,total: ~p",[M , FileName,Total]),
   {noreply, State};
 handle_cast(_Request, State) ->
   {noreply, State}.

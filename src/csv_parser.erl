@@ -132,17 +132,19 @@ to_term(Repo,List,Delimit_field,Delimit_line) when is_map(Repo) ->
 %%---------------------------------------------------------------------------------------
 read_line_fold(F,FileName,LinesGap)->
   {ok, Fd} = file:open(FileName, [raw, binary]),
-  read_line(Fd,LinesGap,F),
-  file:close(Fd).
+  Total = read_line(Fd,LinesGap,F),
+  file:close(Fd),
+  Total.
 
 
 read_line(Fd, LinesGap, F) ->
   read_line(Fd, <<"">>, [], [0,0], LinesGap, F).
 read_line(_Fd, Line, eof, [N,Total], _, F) ->
-  lager:info("restore table lines:~p", [Total+N-1]),
-  F(Line);
+  lager:debug("restore table lines:~p", [Total+N-1]),
+  F(Line),
+  Total+N-1;
 read_line(Fd, Line, [], [N,Total], LinesGap, F) when N >= LinesGap ->
-  lager:info("restore table lines:~p", [Total]),
+  lager:debug("restore table lines:~p", [Total]),
   F(Line),
   {Line3, Sign} = case file:read_line(Fd) of
                     {ok, Line2} -> {Line2, []};
