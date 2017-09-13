@@ -196,7 +196,7 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
     , settlement_date => binary
     , txn_date => binary
     , txn_time => binary
-    , ums_mcht_id => binary
+    , ums_mcht_id => integer
     , term_id => binary
     , bank_card_no => binary
     , txn_amt => integer
