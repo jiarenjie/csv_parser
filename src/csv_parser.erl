@@ -11,7 +11,7 @@
 -author("jiarj").
 
 %% API
--export([parse/2, read_line_fold/3, write_to_file/5, write_to_file/6, start/2, stop/1]).
+-export([parse/2,parse/3, read_line_fold/3, write_to_file/5, write_to_file/6, start/2, stop/1]).
 
 
 
