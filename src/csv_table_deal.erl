@@ -51,7 +51,7 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
 %%  FileName = "/mnt/d/csv/"++atom_to_list(M)++".txt",
   file:write_file(FileName, [], [write]),
   LinesGap = 500,
-  lager:info("backup table: ~p from file : ~ts start", [M , FileName]),
+  lager:info("backup table: ~p from file : ~ts start", [M, FileName]),
   F_repo_to_mode =
     fun(Repo, M0, Fields, Config, Write) ->
       Model = apply(M_model, F_model, [M0, Repo]),
@@ -77,12 +77,12 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
   {atomic, {N, Rest, SubTotal}} = mnesia:transaction(F1),
   lager:debug("Write ~p lines to file:~ts", [SubTotal + N, FileName]),
   csv_parser:write_to_file(FileName, Rest, Fields, Delimit_field, Delimit_line, [append]),
-  lager:info("Write table: ~p to file : ~ts success,total: ~p", [M , FileName,SubTotal + N]),
+  lager:info("Write table: ~p to file : ~ts success,total: ~p", [M, FileName, SubTotal + N]),
   {noreply, State};
 handle_cast({restore, M, FileName}, #state{f_fields = {M_Field, F_Field}, f_save = {M_save, F_save}} = State) ->
   Config = table_read_config(M),
   Fields = apply(M_Field, F_Field, [M]),
-  lager:info("restore table: ~p to file :~ts start",[M , FileName ]),
+  lager:info("restore table: ~p to file :~ts start", [M, FileName]),
   F = fun(Bin) ->
     Lists = csv_parser:parse(Config, Bin),
     Config2 = csv_table_deal:table_deal_config(M),
@@ -96,7 +96,7 @@ handle_cast({restore, M, FileName}, #state{f_fields = {M_Field, F_Field}, f_save
       end,
 %%  FileName = "/mnt/d/csv/"++atom_to_list(M)++".txt",
   Total = csv_parser:read_line_fold(F, FileName, 500),
-  lager:info("restore table: ~p to file : ~ts success,total: ~p",[M , FileName,Total]),
+  lager:info("restore table: ~p to file : ~ts success,total: ~p", [M, FileName, Total]),
   {noreply, State};
 handle_cast(_Request, State) ->
   {noreply, State}.
@@ -172,7 +172,7 @@ table_deal_config(repo_history_mcht_txn_log_pt) ->
   table_deal_config(repo_mcht_txn_log_pt);
 table_deal_config(repo_history_up_txn_log_pt) ->
   table_deal_config(repo_up_txn_log_pt);
-table_deal_config(repo_history_ums_reconcile_result_pt)->
+table_deal_config(repo_history_ums_reconcile_result_pt) ->
   table_deal_config(repo_ums_reconcile_result_pt);
 table_deal_config(repo_ums_reconcile_result_pt) ->
   #{
@@ -196,28 +196,40 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
     , settlement_date => binary
     , txn_date => binary
     , txn_time => binary
-    , ums_mcht_id => integer
+    , ums_mcht_id =>
+  fun
+    (Value, O) when is_integer(Value) ->
+      csv_table_deal:do_out_2_model_one_field({Value, integer}, O);
+    (Value, O) when is_binary(Value) ->
+      case O of
+        write ->
+          csv_table_deal:do_out_2_model_one_field({Value, is_binary}, O);
+        save ->
+          binary_to_integer(Value, utf8)
+      end
+
+  end
     , term_id => binary
     , bank_card_no => binary
     , txn_amt => integer
     , txn_type =>
-        fun
-          (Value, O) when is_atom(Value) ->
-          csv_table_deal:do_out_2_model_one_field({Value,atom},O);
-          (Value, O) when is_binary(Value)->
-            case O of
-              write ->
-                case Value of
-                  <<"E74">> ->
-                    <<"refund">>;
-                  _ ->
-                    <<"pay">>
-                end;
-              save ->
-                binary_to_atom(Value, utf8)
-            end
+  fun
+    (Value, O) when is_atom(Value) ->
+      csv_table_deal:do_out_2_model_one_field({Value, atom}, O);
+    (Value, O) when is_binary(Value) ->
+      case O of
+        write ->
+          case Value of
+            <<"E74">> ->
+              <<"refund">>;
+            _ ->
+              <<"pay">>
+          end;
+        save ->
+          binary_to_atom(Value, utf8)
+      end
 
-        end
+  end
     , txn_fee => integer
     , term_batch_no => binary
     , term_seq => binary

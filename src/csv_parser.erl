@@ -165,6 +165,9 @@ read_line_fold(F, FileName, LinesGap) ->
 
 read_line(Fd, LinesGap, F) ->
   read_line(Fd, <<"">>, [], [0, 0], LinesGap, F).
+read_line(_Fd, <<"">>, eof, [N, Total], _, F) ->
+  lager:debug("The file is empty"),
+  0;
 read_line(_Fd, Line, eof, [N, Total], _, F) ->
   lager:debug("restore table lines:~p", [Total + N - 1]),
   F(Line),
