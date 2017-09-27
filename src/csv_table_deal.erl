@@ -205,7 +205,7 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
         write ->
           csv_table_deal:do_out_2_model_one_field({Value, binary}, O);
         save ->
-          binary_to_integer(Value, utf8)
+          binary_to_integer(Value)
       end
 
   end
