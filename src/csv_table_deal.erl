@@ -203,7 +203,7 @@ table_deal_config(repo_ums_reconcile_result_pt) ->
     (Value, O) when is_binary(Value) ->
       case O of
         write ->
-          csv_table_deal:do_out_2_model_one_field({Value, is_binary}, O);
+          csv_table_deal:do_out_2_model_one_field({Value, binary}, O);
         save ->
           binary_to_integer(Value, utf8)
       end
