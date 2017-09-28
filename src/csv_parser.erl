@@ -57,7 +57,7 @@ parse(Config, Bin, F) ->
 line_to_map_recursive(BinContent, Field_map,F) ->
   line_to_map_recursive(BinContent, Field_map, {0,[]},F).
 line_to_map_recursive([], _Field_map, {N,Acc},_F) ->
-  lager:info("total:~p",[N]),
+%%  lager:info("total:~p",[N]),
   Acc;
 line_to_map_recursive([Line | Rest], Field_map, {N,Acc} ,F ) ->
   Map = line_to_map(Line, Field_map),
@@ -67,7 +67,7 @@ line_to_map_recursive([Line | Rest], Field_map, {N,Acc} ,F ) ->
 line_to_map_recursive2(BinContent, Delimit_field, ListHeadLine, Field_map,F) ->
   line_to_map_recursive2(BinContent, Delimit_field, ListHeadLine, Field_map, {0,[]},F).
 line_to_map_recursive2([], _Delimit_field, _ListHeadLine, _Field_map, {N,Acc},_F) ->
-  lager:info("total:~p",[N]),
+%%  lager:info("total:~p",[N]),
   Acc;
 line_to_map_recursive2([Line | Rest], Delimit_field, ListHeadLine, Field_map, {N,Acc},F) ->
   Map = line_to_map(Line, Delimit_field, ListHeadLine, Field_map),
