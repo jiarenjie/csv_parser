@@ -33,7 +33,10 @@ init([]) ->
 
 
 restore(M, FileName) ->
-  gen_server:cast(?SERVER, {restore, M, FileName}).
+  case filelib:is_regular(FileName) of
+      true -> gen_server:cast(?SERVER, {restore, M, FileName});
+    _ -> throw(["file is not exis!!!",FileName])
+  end.
 
 backup(M, FileName) ->
   gen_server:cast(?SERVER, {backup, M, FileName}).
