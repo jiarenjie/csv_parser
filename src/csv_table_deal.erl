@@ -34,8 +34,9 @@ init([]) ->
 
 restore(M, FileName) ->
   case filelib:is_regular(FileName) of
-      true -> gen_server:cast(?SERVER, {restore, M, FileName});
-    _ -> throw(["file is not exis!!!",FileName])
+    true -> gen_server:cast(?SERVER, {restore, M, FileName});
+    _ -> lager:error(["file : ~p is not exis!!!", [FileName]]),
+      ok
   end.
 
 backup(M, FileName) ->
