@@ -173,7 +173,7 @@ read_line(F,FileName,_Fd, Line, eof, [N, Total], _) ->
   F(Line),
   Total + N - 1;
 read_line(F,FileName,Fd, Line, [], [N, Total], LinesGap) when N >= LinesGap ->
-  lager:debug("restore reom file:~p lines:~p", [FileName,Total]),
+  lager:debug("restore from file:~p lines:~p", [FileName,Total]),
   F(Line),
   {Line3, Sign} = case file:read_line(Fd) of
                     {ok, Line2} -> {Line2, []};
