@@ -83,8 +83,8 @@ handle_cast({backup, M, FileName}, #state{f_qh = {M_qh, F_qh}, f_fields = {M_fie
   csv_parser:write_to_file(FileName, Rest, Fields, Delimit_field, Delimit_line, [append]),
   lager:info("Write table: ~p to file : ~ts success,total: ~p", [M, FileName, SubTotal + N]),
   % 压缩文件，节省空间
-  os:cmd("gzip " ++ binary_to_list(FileName)),
-  lager:debug("Compress ~p end! ", [FileName]),
+  os:cmd("gzip -f " ++ binary_to_list(FileName)),
+  lager:info("Compress ~p end! ", [FileName]),
 
   {noreply, State};
 handle_cast({restore, M, FileName}, #state{f_fields = {M_Field, F_Field}, f_save = {M_save, F_save}} = State) ->
