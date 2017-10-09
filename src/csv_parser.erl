@@ -158,34 +158,34 @@ to_term(Repo, List, Delimit_field, Delimit_line) when is_map(Repo) ->
 %%---------------------------------------------------------------------------------------
 read_line_fold(F, FileName, LinesGap) ->
   {ok, Fd} = file:open(FileName, [raw, binary]),
-  Total = read_line(Fd, LinesGap, F),
+  Total = read_line(F,FileName,Fd, LinesGap),
   file:close(Fd),
   Total.
 
 
-read_line(Fd, LinesGap, F) ->
-  read_line(Fd, <<"">>, [], [0, 0], LinesGap, F).
-read_line(_Fd, <<"">>, eof, [N, Total], _, F) ->
-  lager:debug("The file is empty"),
+read_line(F,FileName,Fd, LinesGap) ->
+  read_line(F,FileName,Fd, <<"">>, [], [0, 0], LinesGap).
+read_line(_F,FileName,_Fd, <<"">>, eof, [N, Total], _) ->
+  lager:debug("The file:~p is empty",[FileName]),
   0;
-read_line(_Fd, Line, eof, [N, Total], _, F) ->
-  lager:debug("restore table lines:~p", [Total + N - 1]),
+read_line(F,FileName,_Fd, Line, eof, [N, Total], _) ->
+  lager:debug("restore from file:~p lines:~p", [FileName,Total + N - 1]),
   F(Line),
   Total + N - 1;
-read_line(Fd, Line, [], [N, Total], LinesGap, F) when N >= LinesGap ->
-  lager:debug("restore table lines:~p", [Total]),
+read_line(F,FileName,Fd, Line, [], [N, Total], LinesGap) when N >= LinesGap ->
+  lager:debug("restore reom file:~p lines:~p", [FileName,Total]),
   F(Line),
   {Line3, Sign} = case file:read_line(Fd) of
                     {ok, Line2} -> {Line2, []};
                     eof -> {<<"">>, eof}
                   end,
-  read_line(Fd, Line3, Sign, [1, Total + N], LinesGap, F);
-read_line(Fd, Line, [], [N, Total], LinesGap, F) when N < LinesGap ->
+  read_line(F,FileName,Fd, Line3, Sign, [1, Total + N], LinesGap);
+read_line(F,FileName,Fd, Line, [], [N, Total], LinesGap) when N < LinesGap ->
   {Line3, Sign} = case file:read_line(Fd) of
                     {ok, Line2} -> {Line2, []};
                     eof -> {<<"">>, eof}
                   end,
-  read_line(Fd, <<Line/binary, Line3/binary>>, Sign, [N + 1, Total], LinesGap, F).
+  read_line(F,FileName,Fd, <<Line/binary, Line3/binary>>, Sign, [N + 1, Total], LinesGap).
 
 
 
