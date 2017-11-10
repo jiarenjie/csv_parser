@@ -11,7 +11,7 @@
 -author("jiarj").
 
 %% API
--export([parse/2,parse/3, read_line_fold/3, write_to_file/5, write_to_file/6, start/2, stop/1]).
+-export([parse_content/2,parse_content/3,parse/2,parse/3, read_line_fold/3, write_to_file/5, write_to_file/6, start/2, stop/1]).
 
 
 
@@ -22,12 +22,13 @@ start(_StartType, _StartArgs) ->
 stop(_State) ->
   ok.
 %%---------------------------------------------------------------------------------------
-parse(Config, Bin) ->
+parse_content(Config, Bin) ->
   F = fun(Map,Acc) ->
     [Map|Acc]
       end,
-  parse(Config, Bin, F).
-parse(Config, Bin, F) ->
+  parse_content(Config, Bin, F).
+
+parse_content(Config, Bin, F)->
   Delimit_line = maps:get(delimit_line, Config, undefined),
   BinList = binary:split(Bin, Delimit_line, [global, trim]),
   TotalLines = length(BinList),
@@ -38,21 +39,31 @@ parse(Config, Bin, F) ->
   HeadLine = maps:get(headLine, Config, undefined),
   Separation_line = maps:get(separation_line, Config, undefined),
 
-  BinContent = get_content(BinList, SkipTopLines, TotalLines, SkipEndLines, Separation_line),
+  {HeadBin,BodyBin,EndBin}  = get_content(BinList, SkipTopLines, TotalLines, SkipEndLines, Separation_line),
 
-  case Delimit_field of
+  Body = case Delimit_field of
     undefined ->
-      line_to_map_recursive(BinContent, Field_map,F);
+      line_to_map_recursive(BodyBin, Field_map,F);
 
 %%      [line_to_map(Line,Field_map) || Line <- BinContent];
     Delimit_field ->
       BinHeadLine = get_file_head(BinList, HeadLine),
-      ListHeadLine = headLine_to_list(BinHeadLine, hd(BinContent), Delimit_field),
+      ListHeadLine = headLine_to_list(BinHeadLine, hd(BodyBin), Delimit_field),
       %lager:debug("line:~p",[length(BinListDetail)]),
-      line_to_map_recursive2(BinContent, Delimit_field, ListHeadLine, Field_map,F)
+      line_to_map_recursive2(BodyBin, Delimit_field, ListHeadLine, Field_map,F)
 %%      [line_to_map(Line,Delimit_field,ListHeadLine,Field_map) || Line <- BinContent]
 
-  end.
+  end,
+  #{body=>Body,headBin =>HeadBin, endBin=>EndBin}.
+
+parse(Config, Bin) ->
+  Map = parse_content(Config, Bin),
+  {ok,List} = maps:find(body,Map),
+  List.
+parse(Config, Bin, F) ->
+  Map = parse_content(Config, Bin,F),
+  {ok,List} = maps:find(body,Map),
+  List.
 
 line_to_map_recursive(BinContent, Field_map,F) ->
   line_to_map_recursive(BinContent, Field_map, {0,[]},F).
@@ -80,13 +91,20 @@ get_file_head(BinList, undefined) ->
   <<>>.
 
 get_content(BinList, SkipTopLines, TotalLines, SkipEndLines, Separation_line) when is_integer(Separation_line) ->
+
   Binary_separation_line = lists:nth(Separation_line, BinList),
   BinListDetail = lists:sublist(BinList, SkipTopLines + 1, TotalLines - SkipTopLines - SkipEndLines),
   F = fun_filter_line(Binary_separation_line),
-  lists:filter(F, BinListDetail)
-;
+  Body =lists:filter(F, BinListDetail),
+  Head = lists:sublist(BinList, 1, SkipTopLines),
+  End = lists:sublist(BinList, TotalLines - SkipEndLines + 1,  SkipEndLines),
+  {Head,Body,End};
 get_content(BinList, SkipTopLines, TotalLines, SkipEndLines, undefined) ->
-  lists:sublist(BinList, SkipTopLines + 1, TotalLines - SkipTopLines - SkipEndLines).
+
+  Head = lists:sublist(BinList, 1, SkipTopLines),
+  Body = lists:sublist(BinList, SkipTopLines + 1, TotalLines - SkipTopLines - SkipEndLines),
+  End = lists:sublist(BinList, TotalLines - SkipEndLines + 1,  SkipEndLines),
+  {Head,Body,End}.
 
 headLine_to_list(<<>>, L, Delimit_field) ->
   Length = length(binary:split(L, Delimit_field, [global])),

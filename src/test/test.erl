@@ -154,3 +154,10 @@ inn_test() ->
   L = csv_parser:parse(Config, Bin),
   lager:debug("length(L):~p", [length(L)]),
   L.
+
+
+content_test() ->
+  Config = config4(),
+  {ok, Bin} = file:read_file("/mnt/d/csv/finance.20170705.txt.wap"),
+  Map = csv_parser:parse_content(Config, Bin),
+  Map.
